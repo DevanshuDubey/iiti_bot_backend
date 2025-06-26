@@ -37,15 +37,9 @@ class BaseAgent(BaseQuestionAnswerer):
 
     @pw.table_transformer 
     def answer_query_table(self, queries: pw.Table) -> pw.Table:
-        # Split the prompt template into the part before and after the placeholder {query}.
-        prompt_parts = self.prompt_template.split("{query}")
-        if len(prompt_parts) != 2:
-            raise ValueError(
-                "The prompt_template must contain exactly one '{query}' placeholder."
-            )
         
         results = queries.with_columns(
-            prompt=prompt_parts[0] + pw.this.query + prompt_parts[1]
+            prompt=self.prompt_template.format(query=pw.this.query)
         )
         
         results = results.with_columns(

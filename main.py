@@ -13,7 +13,7 @@ from pathway.xpacks.llm.document_store import DocumentStore
 from pathway.stdlib.indexing import HybridIndexFactory, BruteForceKnnFactory, TantivyBM25Factory
 from pathway.xpacks.llm.question_answering import AdaptiveRAGQuestionAnswerer, BaseQuestionAnswerer
 from pydantic import BaseModel, ConfigDict
-from pathway.xpacks.llm.servers import BaseRestServer
+from pathway.xpacks.llm.servers import BaseRestServer, QARestServer
 
 source = pw.io.fs.read(
     path="./data",
@@ -50,23 +50,27 @@ chatmodel  = llms.LiteLLMChat(
 #     model="gemini/gemini-2.0-flash-lite"
 # )
 
-bot = BaseAgent.RouterAgentAnswerer(
-    llm=chatmodel
-)
-
-
-# bot = AdaptiveRAGQuestionAnswerer(
-#     indexer=document_store,
-#     llm=chatmodel,
-#     no_answer_string="XXXXXXNONONONXXXXXXX",
-#     n_starting_documents=4,
-#     factor=1,
-#     max_iterations=3,
+# bot = BaseAgent.RouterAgentAnswerer(
+#     llm=chatmodel
 # )
+
+
+bot = AdaptiveRAGQuestionAnswerer(
+    indexer=document_store,
+    llm=chatmodel,
+    no_answer_string="XXXXXXNONONONXXXXXXX",
+    n_starting_documents=4,
+    factor=1,
+    max_iterations=3,
+)
 
 
 host: str = "0.0.0.0"
 port: int = 8000
-server = BaseAgent.RouterRestServer(host,port, bot)
+server = QARestServer(
+    host=host,
+    port=port,
+    router_agent_answerer=bot
+)
 
 server.run()

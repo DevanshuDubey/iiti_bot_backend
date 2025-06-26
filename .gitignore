@@ -1,2 +1,4 @@
 /---working_parts
 /.env
+eg_request.py
+eg_response.json
