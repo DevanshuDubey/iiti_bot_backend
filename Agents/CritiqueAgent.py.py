@@ -2,7 +2,7 @@ import BaseAgent
 from pathway.xpacks.llm import llms, servers
 import pathway as pw
 import json
-
+x = json.load()
 
 class CritiqueAgent(BaseAgent.BaseAgent):
     PROMPT_TEMPLATE = """You are an expert Relevance and Quality Evaluation Agent. Your task is to **critically evaluate** the given answer with respect to the user query and the provided context (retrieved documents). Your evaluation must consider multiple dimensions to determine a **Relevancy Score** between 0 and 1 and provide **detailed constructive feedback** for improvement.
@@ -99,3 +99,4 @@ Return a **valid JSON object** with:
         )
         
         return queries
+    

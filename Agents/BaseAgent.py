@@ -1,11 +1,9 @@
 import warnings
-import os
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated", category=UserWarning)
 
 import pathway as pw
 from pathway.xpacks.llm import llms, servers
 from pathway.xpacks.llm.question_answering import BaseQuestionAnswerer
-
 
 @pw.udf
 def create_result_json(query: str, response: str) -> pw.Json:
@@ -37,10 +35,16 @@ class BaseAgent(BaseQuestionAnswerer):
 
     @pw.table_transformer 
     def answer_query_table(self, queries: pw.Table) -> pw.Table:
+        """
+        Returns answer as pw.Table"""
         
         results = queries.with_columns(
-            prompt=self.prompt_template.format(query=pw.this.query)
+            prompt=pw.apply(
+                lambda query_string: self.prompt_template.format(query=query_string),
+                pw.this.query,
+            )
         )
+
         
         results = results.with_columns(
             response=self.llm(llms.prompt_chat_single_qa(pw.this.prompt), model=pw.this.model)
@@ -49,7 +53,9 @@ class BaseAgent(BaseQuestionAnswerer):
         return results
     
     @pw.table_transformer
-    def answer_query_json(self, queries: pw.Table) -> pw.Table:
+    def answer_query(self, queries: pw.Table) -> pw.Table:
+        """
+        Returns answer as Json"""
         return self.answer_query_table(queries).select(
             result=create_result_json(pw.this.query, pw.this.response)
         )
@@ -66,8 +72,8 @@ class CustomServer(servers.BaseRestServer):
     ):
         super().__init__(host, port, **rest_kwargs)
         self.serve(
-            route="/v1/respond",
+            route="/v1/chat",
             schema=router_agent_answerer.AnswerQuerySchema,
-            handler=router_agent_answerer.answer_query_json,
+            handler=router_agent_answerer.answer_query,
             **rest_kwargs,
         )

@@ -5,7 +5,7 @@ warnings.filterwarnings("ignore", message="pkg_resources is deprecated", categor
 
 
 class ChatAgent(BaseAgent):
-    PROMPT_TEMPLATE = """You are a general chat agent named "IITI_BOT" made by devanshu_dubey to chat with user regarding IIT INDORE.
+    PROMPT_TEMPLATE = """You are a general chat agent named "IITI_BOT" made to chat with user regarding IIT INDORE.
     User Query: "{query}"
     Your response:"""
 
@@ -32,7 +32,7 @@ class ChatAgent(BaseAgent):
 
 # server = CustomServer(
 #     host="0.0.0.0",
-#     port=8080,
+#     port=8000,
 #     router_agent_answerer=bot,
 # )
 
