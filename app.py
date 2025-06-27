@@ -6,7 +6,7 @@ BACKEND_URL = "http://localhost:8000/v1/chat"
 
 st.set_page_config(page_title="IITI BOT", page_icon="🧠")
 
-st.title("🤖 Agent Query Router")
+st.title("🤖 IIT BOT")
 st.caption("Enter a query to see which specialized agent would handle it and get a response.")
 
 user_query = st.text_input(
