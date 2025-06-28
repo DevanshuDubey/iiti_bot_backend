@@ -3,7 +3,7 @@ warnings.filterwarnings("ignore", message="pkg_resources is deprecated", categor
 
 import pathway as pw
 from pathway.xpacks.llm import llms, servers
-
+from typing import List
 from RouterAgent import RouterAgent
 from ChatAgent import ChatAgent
 from ClarifyingAgent import ClarifyingAgent
@@ -11,8 +11,24 @@ from SubQueryAgent import SubQueryAgent
 from TopicKeywordsAgent import TopicKeywordsAgent
 
 @pw.udf
-def create_json(query: str, route: str, response: str) -> pw.Json:
-    return pw.Json({"query": query,"route": route, "response": response})
+def create_final_json(query: str, route: str, llm_response: str) -> pw.Json:
+    subqueries_value: List[str] | None = None
+    response_value: str
+
+    if route == "sub_query_generating_agent":
+        subqueries_value = [q.strip() for q in llm_response.split("<SBQ>") if q.strip()]
+        response_value = None
+        
+    else:
+        subqueries_value = None
+        response_value = llm_response
+        
+    return pw.Json({
+        "query": query,
+        "route": route,
+        "subqueries": subqueries_value,
+        "response": response_value
+    })
 
 
 class Pipeline:
@@ -39,19 +55,20 @@ class Pipeline:
         def generate_prompt(query: str, route: str) -> str:
             agent = self.agent_map.get(route, self.agent_map["chat_agent"])
             return agent.prompt_template.format(query=query)
-
+        
         prompted_queries = routed_queries.with_columns(
             prompt=generate_prompt(pw.this.query, pw.this.route_destination)
         )
         
         final_results = prompted_queries.with_columns(
-            response=self.llm(llms.prompt_chat_single_qa(pw.this.prompt), model=pw.this.model)
+            llm_response=self.llm(llms.prompt_chat_single_qa(pw.this.prompt), model=pw.this.model)
         )
-        x = final_results.select(
-            result=create_json(pw.this.query,routed_queries.route_destination, pw.this.response)
+
+        output = final_results.select(
+            result=create_final_json(pw.this.query, pw.this.route_destination, pw.this.llm_response)
         )
         
-        return x
+        return output
 
 
 class CustomServer(servers.BaseRestServer):
