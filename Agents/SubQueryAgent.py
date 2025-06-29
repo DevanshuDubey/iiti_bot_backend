@@ -5,21 +5,21 @@ warnings.filterwarnings("ignore", message="pkg_resources is deprecated", categor
 
 class SubQueryAgent(BaseAgent):
     PROMPT_TEMPLATE = """
-    You are an expert in generating sub-queries for a given query. Your task is to generate sub-queries for a given query. Respond with ONLY the sub-queries separated by commas.
+    You are an expert in generating sub-queries for a given query. Your task is to generate sub-queries for a given query. Respond with ONLY the sub-queries separated by <SBQ>.
     
     ----
     [EXAMPLES]
     Query: "What are the B.Tech fees and what are the hostel facilities?"
-    Sub-queries: What are the B.Tech fees?, What are the hostel facilities?
+    Sub-queries: What are the B.Tech fees? <SBQ> What are the hostel facilities?
 
     Query: "Compare the CSE and EE departments"
-    Sub-queries: Compare the CSE and EE departments?
+    Sub-queries: How is CSE department? <SBQ> How is EE department?
 
     Query: "How is placement of CSE and EE students?"
-    Sub-queries: How is placement of CSE students?, How is placement of EE students?
+    Sub-queries: How is placement of CSE students? <SBQ> How is placement of EE students?
 
     Query: "What are the B.Tech fees and what are the hostel facilities?"
-    Sub-queries: What are the B.Tech fees?, What are the hostel facilities?
+    Sub-queries: What are the B.Tech fees? <SBQ> What are the hostel facilities?
     ----
     
     Query: {query}

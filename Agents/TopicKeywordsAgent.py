@@ -5,7 +5,7 @@ warnings.filterwarnings("ignore", message="pkg_resources is deprecated", categor
 
 
 class TopicKeywordsAgent(BaseAgent):
-    PROMPT_TEMPLATE = """You are an expert query router. Your task is to classify a user's query into ONE of the following categories based on the structure of the question itself. Respond with ONLY the category names separated by commas.
+    PROMPT_TEMPLATE = """You are an expert query router. Your task is to classify a user's query into the following categories based on the structure of the question itself. Respond with ONLY the category names separated by commas.
     [CATEGORIES AND DEFINITIONS]
     0. general: The query is a general question regarding IIT Indore.
     1. hostel: The query asks about hostel facilities.
@@ -29,8 +29,6 @@ class TopicKeywordsAgent(BaseAgent):
     19. sports: The query asks about sports.
     20. cultural_events: The query asks about cultural events.
     21. departments: The query asks about departments.
-    22. other: The query asks about anything else.
-
     ---
     [EXAMPLES]
     Query: "where is iit indore"

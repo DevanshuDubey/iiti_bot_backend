@@ -30,10 +30,9 @@ if st.button("Send"):
                 data = response.json()
                 category = data.get("response", "N/A")
 
-                st.success(f"**Agent Response:** `{category}`")
-                st.write("The router agent determined this query should be handled by the agent responsible for its category.")
+                st.success(f"**Agent Response:** ")
                 
-                with st.expander("Show Full API Response"):
+                with st.expander("Show Full API Response",expanded=True):
                     st.json(data)
 
             except requests.exceptions.ConnectionError:
