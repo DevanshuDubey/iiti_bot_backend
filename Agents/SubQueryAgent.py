@@ -25,7 +25,7 @@ class SubQueryAgent(BaseAgent):
     Query: {query}
     Sub-queries:
     """
-
+    
     def __init__(self, llm: llms.BaseChat, **kwargs):
         super().__init__(
             llm=llm,

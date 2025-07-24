@@ -29,6 +29,7 @@ class TopicKeywordsAgent(BaseAgent):
     19. sports: The query asks about sports.
     20. cultural_events: The query asks about cultural events.
     21. departments: The query asks about departments.
+    22. branch_name: The query asks about branch.
     ---
     [EXAMPLES]
     Query: "where is iit indore"
