@@ -22,6 +22,7 @@ Given a user's query and a set of retrieved documents, generate a comprehensive 
 3.  **Handling "Not Found":** If the answer to the query cannot be found in the provided `docs`, you must respond with: "The provided documents do not contain enough information to answer this query." Do not attempt to guess or infer an answer.
 4.  **Synthesize, Don't Echo:** Synthesize information from across the documents into a coherent narrative. Do not just copy and paste entire paragraphs from the `docs`.
 5.  **Context as Proof:** At the end of your response, you *must* include the verbatim text snippets from the `docs` that directly support your answer. Enclose these snippets within `<CONTEXT>` and `</CONTEXT>` tags. Each snippet should clearly correspond to the information you provided in the answer.
+6. **Feedback: **You might sometimes also be provided with feedback from your previous written answer. If feedback is present then use the feedback provided to carefully handle the mistakes you had done previously.
 
 **Output Structure:**
 
@@ -65,6 +66,7 @@ Given a user's query and a set of retrieved documents, generate a comprehensive 
 
 *   **query:** "{query}"
 *   **docs:** "{docs}"
+*   **feedback:** "{feedback}"
 *   **answer:**"""
     def __init__(
         self,
@@ -97,8 +99,8 @@ Given a user's query and a set of retrieved documents, generate a comprehensive 
         
         results = queries.with_columns(
             prompt=pw.apply(
-                lambda query_string,docs: self.prompt_template.format(query=query_string,docs=docs),
-                pw.this.query, pw.this.docs,
+                lambda query_string,docs, k, feedback: self.prompt_template.format(query=query_string,docs="/n/n".join(docs[:k]), feedback=feedback),
+                pw.this.query, pw.this.docs, pw.this.k, pw.this.feedback
             )
         )
         

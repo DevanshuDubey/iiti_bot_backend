@@ -86,9 +86,9 @@ Return a **valid JSON object** with:
     @pw.table_transformer 
     def answer_query(self, queries: pw.Table) -> pw.Table:
     
-        prompt = self.prompt_template.format(query=queries.query,
-                                             context="/n/n".join(queries.docs[:k]),
-                                             answer=queries.answer)
+        prompt = self.prompt_template.format(query=pw.queries.query,
+                                             context="/n/n".join(pw.queries.docs[:k]),
+                                             answer=pw.queries.answer)
         response= self.llm(llms.prompt_chat_singe_qa(prompt), model=self.default_llm_name)
         response= json.load(response)
         
