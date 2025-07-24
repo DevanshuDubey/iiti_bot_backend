@@ -101,13 +101,15 @@ Given a user's query and a set of retrieved documents, generate a comprehensive 
                 pw.this.query, pw.this.docs,
             )
         )
-
         
         results = results.with_columns(
             response=self.llm(llms.prompt_chat_single_qa(pw.this.prompt), model=pw.this.model)
         )
+        final_ans=queries.with_columns(
+            answer=pw.results.response
+        )
         
-        return results
+        return final_ans
     
     @pw.table_transformer
     def answer_query(self, queries: pw.Table) -> pw.Table:
