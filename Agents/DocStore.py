@@ -42,6 +42,7 @@ class IITI_RAG_App(AdaptiveRAGQuestionAnswerer):
         self._init_custom_schemas()
 
     def _init_custom_schemas(self) -> None:
+        #----------QUERY SCHEMA-------------------
         class CustomQuerySchema(pw.Schema):
             query: str
             k: int = pw.column_definition(default_value=3)
@@ -51,7 +52,6 @@ class IITI_RAG_App(AdaptiveRAGQuestionAnswerer):
     
     @pw.table_transformer
     def fetch_docs(self, query: pw.Table) -> pw.Table:
-        # Manually add the missing columns that the internal retrieve method expects.
         query_with_full_schema = query.with_columns(
             metadata_filter=None,
             filepath_globpattern=None
@@ -59,21 +59,21 @@ class IITI_RAG_App(AdaptiveRAGQuestionAnswerer):
         return self.retrieve(query_with_full_schema)
 
 
-class CustomServer(servers.BaseRestServer):
-    def __init__(
-        self,
-        host: str,
-        port: int,
-        answerer: "IITI_RAG_App",
-        **rest_kwargs,
-    ):
-        super().__init__(host, port, **rest_kwargs)
-        self.serve(
-            route="/v1/fetch_documents",
-            schema=answerer.CustomQuerySchema,
-            handler=answerer.fetch_docs,
-            **rest_kwargs,
-        )
+# class CustomServer(servers.BaseRestServer):
+#     def __init__(
+#         self,
+#         host: str,
+#         port: int,
+#         answerer: "IITI_RAG_App",
+#         **rest_kwargs,
+#     ):
+#         super().__init__(host, port, **rest_kwargs)
+#         self.serve(
+#             route="/v1/fetch_documents",
+#             schema=answerer.CustomQuerySchema,
+#             handler=answerer.fetch_docs,
+#             **rest_kwargs,
+#         )
 
 # bot = IITI_RAG_App()
 # server = CustomServer(
