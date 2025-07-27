@@ -11,7 +11,7 @@ from pathway.stdlib.indexing import BruteForceKnnFactory
 from pathway.xpacks.llm.question_answering import AdaptiveRAGQuestionAnswerer
 from pathway.xpacks.llm import servers
 
-class IITI_RAG_App(AdaptiveRAGQuestionAnswerer):
+class DocStoreAgent(AdaptiveRAGQuestionAnswerer):
     def __init__(self, **kwargs):
         llm = LiteLLMChat(model="groq/llama3-70b-8192")
         embedder = SentenceTransformerEmbedder(model="all-MiniLM-L6-v2")
@@ -64,7 +64,7 @@ class IITI_RAG_App(AdaptiveRAGQuestionAnswerer):
 #         self,
 #         host: str,
 #         port: int,
-#         answerer: "IITI_RAG_App",
+#         answerer: "DocStoreAgent",
 #         **rest_kwargs,
 #     ):
 #         super().__init__(host, port, **rest_kwargs)
@@ -75,7 +75,7 @@ class IITI_RAG_App(AdaptiveRAGQuestionAnswerer):
 #             **rest_kwargs,
 #         )
 
-# bot = IITI_RAG_App()
+# bot = DocStoreAgent()
 # server = CustomServer(
 #     host="0.0.0.0",
 #     port=8002,
