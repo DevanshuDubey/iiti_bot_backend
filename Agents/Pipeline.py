@@ -9,6 +9,8 @@ from ChatAgent import ChatAgent
 from ClarifyingAgent import ClarifyingAgent
 from SubQueryAgent import SubQueryAgent
 from TopicKeywordsAgent import TopicKeywordsAgent
+from AnswerGeneratingAgent import AnswerGeneratingAgent
+from CritiqueAgent import CritiqueAgent
 
 @pw.udf
 def create_final_json(query: str, route: str, llm_response: str) -> pw.Json:
@@ -41,6 +43,8 @@ class Pipeline:
             "sub_query_generating_agent": SubQueryAgent(llm=llm, **kwargs),
             "topic_and_keywords_agent": TopicKeywordsAgent(llm=llm, **kwargs),
             "chat_agent": ChatAgent(llm=llm, **kwargs),
+            "aga_agent": AnswerGeneratingAgent(llm=llm, **kwargs),
+            "critique_agent": CritiqueAgent(llm=llm, **kwargs),
         }
         self.QuerySchema = self.router_agent.AnswerQuerySchema
 
