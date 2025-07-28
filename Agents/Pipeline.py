@@ -41,10 +41,10 @@ class Pipeline:
         self.agent_map = {
             "clarifying_agent": ClarifyingAgent(llm=llm, **kwargs),
             "sub_query_generating_agent": SubQueryAgent(llm=llm, **kwargs),
-            "topic_and_keywords_agent": TopicKeywordsAgent(llm=llm, **kwargs),
+            # "topic_and_keywords_agent": TopicKeywordsAgent(llm=llm, **kwargs),
             "chat_agent": ChatAgent(llm=llm, **kwargs),
-            "aga_agent": AnswerGeneratingAgent(llm=llm, **kwargs),
-            "critique_agent": CritiqueAgent(llm=llm, **kwargs),
+            # "aga_agent": AnswerGeneratingAgent(llm=llm, **kwargs),
+            # "critique_agent": CritiqueAgent(llm=llm, **kwargs),
         }
         self.QuerySchema = self.router_agent.AnswerQuerySchema
 
@@ -71,8 +71,12 @@ class Pipeline:
         output = final_results.select(
             result=create_final_json(pw.this.query, pw.this.route_destination, pw.this.llm_response)
         )
+        @pw.udf
+        def return_output(routed_queries, output):
+            pw.output.result = pw.routed_queries.route + pw.output.result
+            return output
+        return_output
         
-        return output
 
 
 class CustomServer(servers.BaseRestServer):
