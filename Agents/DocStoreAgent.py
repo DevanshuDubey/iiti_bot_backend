@@ -59,26 +59,26 @@ class DocStoreAgent(AdaptiveRAGQuestionAnswerer):
         return self.retrieve(query_with_full_schema)
 
 
-# class CustomServer(servers.BaseRestServer):
-#     def __init__(
-#         self,
-#         host: str,
-#         port: int,
-#         answerer: "DocStoreAgent",
-#         **rest_kwargs,
-#     ):
-#         super().__init__(host, port, **rest_kwargs)
-#         self.serve(
-#             route="/v1/fetch_documents",
-#             schema=answerer.CustomQuerySchema,
-#             handler=answerer.fetch_docs,
-#             **rest_kwargs,
-#         )
+class CustomServer(servers.BaseRestServer):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        answerer: "DocStoreAgent",
+        **rest_kwargs,
+    ):
+        super().__init__(host, port, **rest_kwargs)
+        self.serve(
+            route="/v1/fetch_documents",
+            schema=answerer.CustomQuerySchema,
+            handler=answerer.fetch_docs,
+            **rest_kwargs,
+        )
 
-# bot = DocStoreAgent()
-# server = CustomServer(
-#     host="0.0.0.0",
-#     port=8002,
-#     answerer=bot,
-# )
-# server.run()
+bot = DocStoreAgent()
+server = CustomServer(
+    host="0.0.0.0",
+    port=8002,
+    answerer=bot,
+)
+server.run()
