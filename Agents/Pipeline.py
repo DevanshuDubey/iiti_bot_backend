@@ -1,6 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated", category=UserWarning)
-
+import os
+os.environ["GROQ_API_KEY"]="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"
 import pathway as pw
 from pathway.xpacks.llm import llms, servers
 from typing import List
@@ -10,27 +11,55 @@ from ClarifyingAgent import ClarifyingAgent
 from SubQueryAgent import SubQueryAgent
 from TopicKeywordsAgent import TopicKeywordsAgent
 from AnswerGeneratingAgent import AnswerGeneratingAgent
-from CritiqueAgent import CritiqueAgent
+import requests
+from Abhinav.further import further_pipeline
+# from CritiqueAgent import CritiqueAgent
+# @pw.udf
+# def access()
+
+
+bot = llms.LiteLLMChat(
+    model="groq/llama3-70b-8192"
+)
 
 @pw.udf
-def create_final_json(query: str, route: str, llm_response: str) -> pw.Json:
-    subqueries_value: List[str] | None = None
+def create_final_json(query: str, route: str, llm_response: str, model) -> pw.Json:
+    subqueries: List[str] | None = None
     response_value: str
+    subqueries = None
+    response_value = llm_response
+    if route == "clarifying_agent" or route == "chat_agent":
+        return pw.Json({
+        "status": "success",
+        "text": response_value
+        })
 
-    if route == "sub_query_generating_agent":
-        subqueries_value = [q.strip() for q in llm_response.split("<SBQ>") if q.strip()]
-        response_value = None
-        
-    else:
-        subqueries_value = None
-        response_value = llm_response
+    # if route == "sub_query_generating_agent":
+    subqueries = [q.strip() for q in llm_response.split("<SBQ>") if q.strip()]
+    response = further_pipeline(query, subqueries, 4)
+    # prompt = AnswerGeneratingAgent.prompt_template
+
+    # response = bot(prompt.format(query=query_string, docs=doc_string))
+
+    # response is a dict/json - take out values and return the final response  
+    
+
+    # return pw.Json({
+    #     "success":"true",
+    #     "response": bot(llms.prompt_chat_single_qa("Answer my quyestuion"), model=model)
+    # })
         
     return pw.Json({
-        "query": query,
-        "route": route,
-        "subqueries": subqueries_value,
-        "response": response_value
-    })
+        "status": "success",
+        "text": response
+        })
+
+    # return pw.Json({
+    #     "query": query,
+    #     "route": route,
+    #     "subqueries": subqueries,
+    #     "response": response_value
+    # })
 
 
 class Pipeline:
@@ -60,6 +89,13 @@ class Pipeline:
             agent = self.agent_map.get(route, self.agent_map["chat_agent"])
             return agent.prompt_template.format(query=query)
         
+        @pw.udf()
+        def smth(route : str):
+            if route == 'chat_agent':
+                return route
+            else:
+                return "smth"
+        
         prompted_queries = routed_queries.with_columns(
             prompt=generate_prompt(pw.this.query, pw.this.route_destination)
         )
@@ -69,16 +105,40 @@ class Pipeline:
         )
 
         output = final_results.select(
-            result=create_final_json(pw.this.query, pw.this.route_destination, pw.this.llm_response)
+            result=create_final_json(pw.this.query, pw.this.route_destination, pw.this.llm_response, pw.this.model)  
         )
-        @pw.udf
-        def return_output(routed_queries, output):
-            pw.output.result = pw.routed_queries.route + pw.output.result
-            return output
-        return_output
+
+        # result1 = create_final_json(final_results.query, final_results.route_destination, final_results.llm_response)
+        # print("*********************************************************************************************************************88")
+        
+        # dict = pw.debug.table_to_dicts(output)
+        # print(dict)
+        # @pw.udf
+        # def return_output(routed_queries, output):
+
+        #     pw.output.result = pw.routed_queries.route_destination + pw.output.result
+        #     # output= output.with_columns(
+        #     #     # result = pw.this.result + pw.routed_queries.route
+        #     #     result = output.select(result=pw.this.result).concat(routed_queries.select(route=pw.this.route))
+        #     # )
+        #     output = output.with_columns(routed_queries.select(pw.this.route_destination))
+        #     pw.udf()
+        #     def fun(route:str):
+        #         if route == "chat_agent":
+        #             return 
+
+        #     output = output.with_columns()
+        #     return output
+        # return return_output
+        return output
         
 
 
+
+
+
+
+## cors
 class CustomServer(servers.BaseRestServer):
     def __init__(
         self,
@@ -95,8 +155,6 @@ class CustomServer(servers.BaseRestServer):
             **rest_kwargs,
         )
 
-bot = llms.LiteLLMChat(
-    model="groq/llama3-70b-8192"
-)
+ 
 server = CustomServer(host="0.0.0.0", port=8000, pipeline=Pipeline(bot))
 server.run()

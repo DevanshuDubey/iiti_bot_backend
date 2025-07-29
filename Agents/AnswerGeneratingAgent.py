@@ -12,6 +12,10 @@ from pathway.xpacks.llm.question_answering import BaseQuestionAnswerer
 def create_result_json(query: str, response: str) -> pw.Json:
     return pw.Json({"query": query, "response": response})
 
+
+
+
+# idhar apna banaya hua base agent kyu nhi use kia
 class AnswerGeneratingAgent(BaseQuestionAnswerer):
     prompt_template="""You are an expert Answer Generating Agent. Your primary mission is to provide accurate, well-structured, and logical answers based *only* on the provided documents (`docs`). You must adhere to the following instructions strictly.
 

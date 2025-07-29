@@ -42,7 +42,7 @@ class DocStoreAgent(AdaptiveRAGQuestionAnswerer):
         self._init_custom_schemas()
 
     def _init_custom_schemas(self) -> None:
-        #----------QUERY SCHEMA-------------------
+        #----------QUERY SCHEMA------------------------------------------------------------
         class CustomQuerySchema(pw.Schema):
             query: str
             k: int = pw.column_definition(default_value=3)

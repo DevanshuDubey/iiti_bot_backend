@@ -11,8 +11,7 @@ class RouterAgent(BaseAgent):
     [CATEGORIES AND DEFINITIONS]
     1. clarifying_agent: The query is too vague or ambiguous to be answered directly or requires clarification from the user.
     2. chat_agent: The query is a greeting, a sign-off, or clearly off-topic from academics or IIT Indore.
-    3. topic_and_keywords_agent: The query asks a SINGLE, SPECIFIC question, even if the answer might be a list. It does not ask for comparisons or contain multiple distinct questions joined by "and".
-    4. sub_query_generating_agent: The query EXPLICITLY asks MULTIPLE questions (e.g., using "and"), asks for a COMPARISON (e.g., "compare", "vs"), or asks for a relationship between two distinct topics.
+    3. sub_query_generating_agent: The query EXPLICITLY asks MULTIPLE questions (e.g., using "and"), asks for a COMPARISON (e.g., "compare", "vs"), or asks for a relationship between two distinct topics.
     
     ---
     [EXAMPLES]
