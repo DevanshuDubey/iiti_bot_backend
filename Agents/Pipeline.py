@@ -50,8 +50,10 @@ def create_final_json(query: str, route: str, llm_response: str, model) -> pw.Js
     # })
         
     return pw.Json({
-        "status": "success",
-        "text": response
+        "check" : "hiiiiiiiiii"
+        # "status": "success",
+        # "text": response["text"],
+        # "source_snippet": response["source_snippet"]
         })
 
     # return pw.Json({
@@ -156,5 +158,9 @@ class CustomServer(servers.BaseRestServer):
         )
 
  
-server = CustomServer(host="0.0.0.0", port=8000, pipeline=Pipeline(bot))
+server = CustomServer(host="0.0.0.0", port=8001, pipeline=Pipeline(bot),
+    # allow_origin="*",
+    # allow_methods=["POST", "GET", "OPTIONS"],
+    # allow_headers=["Content-Type", "Authorization"]                  
+    )
 server.run()

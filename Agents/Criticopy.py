@@ -1,5 +1,6 @@
 from groq import Groq
 from typing import Optional
+from typing import Optional, Dict, List, Any
 
 class CritiqueAgent:
     def __init__(self, model: str = "llama3-70b-8192", prompt_template: Optional[str] = None):
@@ -43,7 +44,6 @@ Return a **valid JSON object** with:
         "SCORE": 0.95,
         "FEEDBACK": "PASS"
     }
-
     Query: "where is iit indore"
     Context: "IIT Indore is a 2nd Generation IIT located in simrol village of Indore, MP"
     Answer: "IIT Indore is located in Indore, MP"
@@ -52,8 +52,6 @@ Return a **valid JSON object** with:
         "SCORE": 0.60,
         "FEEDBACK": "The answer dosen't contain all relevant information available in the context. It is missing which village is the iit indore situated in"
     }
-
-
     Query: "what courses are offered at iit indore"
     Context: "IIT Indore is a 2nd Generation IIT located in Indore, MP. It offers a total of 9 B.Tech courses (CSE, MnC, EE, ME, EP, CE, MEMS, CE, SSE), some M.Tech course, some PhD courses and B.Design courses"
     Answer: "IIT Indore offers 9 B.Tech courses"
@@ -73,10 +71,7 @@ Return a **valid JSON object** with:
     }
     
     
-    [USER QUERY]
-    User Query: "{query}"
-    Context: "{docs}"
-    Answer: "{answer}"
+    
     """
         
 
@@ -84,14 +79,39 @@ Return a **valid JSON object** with:
         self.prompt_template = new_template
 
     def run(self, query: str, docs: str, answer : str) -> str:
-        formatted_prompt = self.prompt_template.format(query=query, docs=docs, answer=answer)
+        user_prompt = """
+    User Query: "{query}"
+    Context: "{docs}"
+    Answer: "{answer}"
+    """
 
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": "You are a master Critique Agent"},
-                {"role": "user", "content": formatted_prompt}
+                {"role": "system", "content": self._default_template},
+                {"role": "user", "content": user_prompt}
             ]
         )
-
-        return response.choices[0].message.content.strip()
+        response_text = response.choices[0].message.content.strip()
+        return self._extract_dict_from_response(response_text)
+    
+    def _extract_dict_from_response(self, text: str) -> Dict[str, Any]:
+        """
+        Safely parse the LLM response assuming it contains a Python-style or JSON-style dictionary.
+        """
+        try:
+            match = re.search(r"{.*?}", text, re.DOTALL)
+            if match:
+                extracted = match.group(0)
+                parsed = ast.literal_eval(extracted)  # safer than eval, handles Python-style dicts
+                if isinstance(parsed, dict):
+                    return parsed
+                else:
+                    raise ValueError("Parsed object is not a dict.")
+            else:
+                raise ValueError("No valid dict structure found in the response.")
+        except Exception as e:
+            return {
+                "error": f"Failed to parse response: {str(e)}",
+                "raw_response": text
+            }

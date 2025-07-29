@@ -6,6 +6,7 @@ os.environ["GROQ_API_KEY"]="gsk_4VxizmfbYRnU7UnigyQWWGdyb3FYUsxQxumvZrrgLnnMIgAu
 # client = Groq(api_key=groq_api_key)
 url = "http://localhost:3001/v1/retrieve"
 from GroqAgent import GroqAgent
+from Criticopy import CritiqueAgent
 # import os
 # os.environ["GROQ_API_KEY"]="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"
 
@@ -27,14 +28,6 @@ def single_query(main_query:str, k : int):
     results = response.json()
     for doc in results:
         doc_string += doc["text"]
-    # response = client.chat.completions.create(
-    #     model="groq/llama3-70b-8192",  # Or llama3-8b-8192, etc.
-    #     messages=[
-    #         {"role": "system", "content": "You are a helpful assistant."},
-    #         {"role": "user", "content": prompt}
-    #     ]
-    # )
-    # agent = GroqAgent()
     return query_string , doc_string    
 
 
@@ -60,7 +53,7 @@ def further_pipeline(main_query:str, queries : list, k : int) :
     max_adaptive_iterations = 3
     initial_k = k
     critique_threshold = 0.8
-    initial_feedback = "There is no feedback as of now."
+    feedback = "There is no feedback as of now."
     subqueries = True if len(queries) > 1 else False
     if subqueries:
         query_string, doc_string = multiple_queries(main_query, queries, initial_k)
@@ -77,20 +70,29 @@ def further_pipeline(main_query:str, queries : list, k : int) :
        # AGA ko query_string, doc_string, feedback pass krege
        
        # AGA ka response ko critique ko pass krege and usse response me threshold and feedback lege
+        response = AGAagent.run(query_string, doc_string, feedback)
+        answer = response["answer"]
+        source_snippet = response["source_snippet"]
+
+        critique_response = CritiqueAgent.run(main_query, doc_string, answer)
+
+        answer_score = critique_response["SCORE"]
+        feedback = critique_response["FEEDBACK"]
+ 
 
 
+         
 
-
-        # " ".join(query_list[0:k])
-
-        threshold = 0
+    
         
-        if threshold < critique_threshold:
+        if answer_score < critique_threshold:
             if iteration_counter == max_adaptive_iterations:
-              pass # fallback - return ki ans not found in the docs(idhar relevant context dena h ki nhi - direct doc_string de skte par vo badi hogi - iske liye summariser agent daal skte)
-
+               fallback_response = {
+                   "text" : "fallback vala text",
+                   "source_snippet" : source_snippet
+               }
+               return fallback_response
             
-            # get the query string(this would be same) and the doc string(would be changed with increased k)
             iteration_counter += 1 
             if subqueries:
                 query_string, doc_string = multiple_queries(main_query, queries, initial_k + iteration_counter*2)
@@ -100,7 +102,11 @@ def further_pipeline(main_query:str, queries : list, k : int) :
                  
 
         else:
-            pass # return the answer and the source snippets         
+            final_response = {
+                   "text" : answer,
+                   "source_snippet" : source_snippet
+               }
+            return final_response
 
 
 
