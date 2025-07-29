@@ -60,7 +60,7 @@ Given a user's query and a set of retrieved documents, generate a comprehensive 
     def set_prompt_template(self, new_template: str):
         self.prompt_template = new_template
 
-    def run(self, query: str, docs: str) -> str:
+    def run(self, query: str, docs: str, feedback) -> str:
         formatted_prompt = self.prompt_template.format(query=query, docs=docs)
 
         response = self.client.chat.completions.create(

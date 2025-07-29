@@ -68,38 +68,39 @@ def further_pipeline(main_query:str, queries : list, k : int) :
         query_string, doc_string = single_query(main_query, initial_k)
     
     # return query_string, doc_string
-    agent = GroqAgent()
-    return doc_string+" \n\n\n\n\nthis is output "+agent.run(query_string,doc_string)
-    # while True:
+    AGAagent = GroqAgent()
+    CritiqueAgent = CritiqueAgent()
+    # return doc_string+" \n\n\n\n\nthis is output "+agent.run(query_string,doc_string,initial_feedback)
+    while True:
         
       
-    #    # AGA ko query_string, doc_string, feedback pass krege
+       # AGA ko query_string, doc_string, feedback pass krege
        
-    #    # AGA ka response ko critique ko pass krege and usse response me threshold and feedback lege
+       # AGA ka response ko critique ko pass krege and usse response me threshold and feedback lege
 
 
 
 
+        # " ".join(query_list[0:k])
 
-
-    #     threshold = 0
+        threshold = 0
         
-    #     if threshold < critique_threshold:
-    #         if iteration_counter == max_adaptive_iterations:
-    #           pass # fallback - return ki ans not found in the docs(idhar relevant context dena h ki nhi - direct doc_string de skte par vo badi hogi - iske liye summariser agent daal skte)
+        if threshold < critique_threshold:
+            if iteration_counter == max_adaptive_iterations:
+              pass # fallback - return ki ans not found in the docs(idhar relevant context dena h ki nhi - direct doc_string de skte par vo badi hogi - iske liye summariser agent daal skte)
 
             
-    #         # get the query string(this would be same) and the doc string(would be changed with increased k)
-    #         iteration_counter += 1 
-    #         if subqueries:
-    #             query_string, doc_string = multiple_queries(main_query, queries, initial_k + iteration_counter*2)
-    #         else:
-    #             query_string, doc_string = single_query(main_query, initial_k + iteration_counter*2)
+            # get the query string(this would be same) and the doc string(would be changed with increased k)
+            iteration_counter += 1 
+            if subqueries:
+                query_string, doc_string = multiple_queries(main_query, queries, initial_k + iteration_counter*2)
+            else:
+                query_string, doc_string = single_query(main_query, initial_k + iteration_counter*2)
 
                  
 
-    #     else:
-    #         pass # return the answer and the source snippets         
+        else:
+            pass # return the answer and the source snippets         
 
 
 
