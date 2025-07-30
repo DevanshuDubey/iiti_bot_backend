@@ -96,7 +96,7 @@ def further_pipeline(main_query:str, queries : list, k : int) :
                    "text" : "fallback vala text",
                    "source_snippet" : source_snippet
                }
-               return fallback_response , answer_score , feedback , iteration_counter , doc_string
+               return fallback_response , answer_score , feedback , iteration_counter , doc_string , query_string
             
             iteration_counter += 1 
             if subqueries:
@@ -111,7 +111,7 @@ def further_pipeline(main_query:str, queries : list, k : int) :
                    "text" : answer,
                    "source_snippet" : source_snippet
                }
-            return final_response , answer_score , feedback , iteration_counter , doc_string
+            return final_response , answer_score , feedback , iteration_counter , doc_string , query_string
 
 
 

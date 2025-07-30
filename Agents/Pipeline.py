@@ -31,6 +31,7 @@ def create_final_json(query: str, route: str, llm_response: str, model) -> pw.Js
     if route == "clarifying_agent" or route == "chat_agent":
         return pw.Json({
          "check" : "hiiiiiiiiii",
+        "route" : route, 
         "status": "success",
         "text": response_value
         })
