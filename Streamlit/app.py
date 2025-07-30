@@ -2,7 +2,7 @@
 import streamlit as st
 import requests
 
-BACKEND_URL = "http://localhost:8000/v1/chat"
+BACKEND_URL = "http://0.0.0.0:3000/v1/chat"
 
 st.set_page_config(page_title="IITI BOT", page_icon="🧠")
 
@@ -23,7 +23,7 @@ if st.button("Send"):
             try:
                 payload = {"query": user_query}
 
-                response = requests.post(BACKEND_URL, json=payload, timeout=10)
+                response = requests.post(BACKEND_URL, json=payload)
 
                 response.raise_for_status()
 

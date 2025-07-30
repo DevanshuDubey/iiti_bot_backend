@@ -1,155 +1,70 @@
-import warnings
-warnings.filterwarnings("ignore", message="pkg_resources is deprecated", category=UserWarning)
+import re
+import ast
+from typing import Optional, Dict, Any
+from pathway.xpacks.llm.llms import LiteLLMChat
 
-from dotenv import load_dotenv
-load_dotenv()
-
-import pathway as pw
-from pathway.xpacks.llm import llms, servers
-from pathway.xpacks.llm.question_answering import BaseQuestionAnswerer
-
-@pw.udf
-def create_result_json(query: str, response: str) -> pw.Json:
-    return pw.Json({"query": query, "response": response})
-
-
-
-
-# idhar apna banaya hua base agent kyu nhi use kia
-class AnswerGeneratingAgent(BaseQuestionAnswerer):
-    prompt_template="""You are an expert Answer Generating Agent. Your primary mission is to provide accurate, well-structured, and logical answers based *only* on the provided documents (`docs`). You must adhere to the following instructions strictly.
-
-**Core Task:**
-Given a user's query and a set of retrieved documents, generate a comprehensive answer.
-
-**Instructions & Constraints:**
-
-1.  **Strict Grounding:** Base your answer *exclusively* on the information present in the provided `docs`. Do not use any prior knowledge or information from outside the given context.
-2.  **Answer & Cite:** First, provide a direct and concise answer to the user's query. Then, if necessary, provide a more detailed explanation. Every piece of information in your answer must be directly supported by the `docs`.
-3.  **Handling "Not Found":** If the answer to the query cannot be found in the provided `docs`, you must respond with: "The provided documents do not contain enough information to answer this query." Do not attempt to guess or infer an answer.
-4.  **Synthesize, Don't Echo:** Synthesize information from across the documents into a coherent narrative. Do not just copy and paste entire paragraphs from the `docs`.
-5.  **Context as Proof:** At the end of your response, you *must* include the verbatim text snippets from the `docs` that directly support your answer. Enclose these snippets within `<CONTEXT>` and `</CONTEXT>` tags. Each snippet should clearly correspond to the information you provided in the answer.
-
-**Output Structure:**
-
-1.  **(Direct Answer)**
-2.  **(Detailed Elaboration - if applicable)**
-3.  **<CONTEXT>**
-    *   **(Supporting snippet 1 from docs)**
-    *   **(Supporting snippet 2 from docs)**
-    *   **...**
-    **</CONTEXT>**
-
----
-
-**[EXAMPLES]**
-
-**Example 1**
-
-*   **query:** "What are the main features of the 'Odyssey' laptop and in which year was it released?"
-*   **docs:**
-    *   "Doc 1: The 'Odyssey' laptop, launched in 2023, is known for its feather-light chassis and long-lasting battery life."
-    *   "Doc 2: Key specifications of the 'Odyssey' include a high-resolution OLED display and a silent, fanless design, making it ideal for professionals."
-*   **answer:**
-    The "Odyssey" laptop was released in 2023. Its main features include a lightweight chassis, long battery life, a high-resolution OLED display, and a silent, fanless design.
-    <CONTEXT>
-    *   The 'Odyssey' laptop, launched in 2023, is known for its feather-light chassis and long-lasting battery life.
-    *   Key specifications of the 'Odyssey' include a high-resolution OLED display and a silent, fanless design...
-    </CONTEXT>
-
----
-
-**[USER_QUERY]**
-
-*   **query:** "{query}"
-*   **docs:** "{docs}"
-*   **answer:**"""
-
-    def __init__(
-        self,
-        llm: llms.BaseChat,
-        *,
-        default_llm_name: str | None = None,
-        prompt_template: str | None = None,
-    ):
-        self.llm = llm
-        if default_llm_name is None:
-            default_llm_name = llm.model
-
-        if prompt_template is None:
-            self.prompt_template = self.__class__.prompt_template
-        else:
-            self.prompt_template = prompt_template
-        
-        self._init_schemas(default_llm_name)
-
-    def _init_schemas(self, default_llm_name: str | None = None) -> None:
-        class BaseQuerySchema(pw.Schema):
-            query: str
-            model: str | None = pw.column_definition(default_value=default_llm_name)
-            docs: list[str] | None = pw.column_definition(default_value=[])
-            k: int = pw.column_definition(default_value=3)
-        self.AnswerQuerySchema = BaseQuerySchema
-        self.RetrieveQuerySchema = pw.Schema
-        self.StatisticsQuerySchema = pw.Schema
-        self.InputsQuerySchema = pw.Schema
-
-    @pw.table_transformer
-    def answer_query_table(self, queries: pw.Table) -> pw.Table:
-        """
-        Returns answer as pw.Table
-        """
-        results = queries.with_columns(
-            prompt=pw.apply(
-                lambda query, docs, k: self.prompt_template.format(
-                    query=query, docs="\n\n".join(docs[:k])
-                ),
-                pw.this.query, pw.this.docs, pw.this.k
-            )
+class AnswerGeneratingAgent:
+    def __init__(self, model: str = "groq/llama3-70b-8192", prompt_template: Optional[str] = None):
+        self.chat = LiteLLMChat(
+            model=model,
+            response_format={"type": "json_object"},
         )
+        self.prompt_template = prompt_template or self._default_template()
 
-        results = results.with_columns(
-            response=self.llm(llms.prompt_chat_single_qa(pw.this.prompt), model=pw.this.model)
-        )
-        return results
+    def _default_template(self) -> str:
+        return """You are a highly capable Answer Generation Agent. Your task is to synthesize a high-quality answer to a user query using only the provided context.
 
-    @pw.table_transformer
-    def answer_query(self, queries: pw.Table) -> pw.Table:
-        """
-        Returns answer as Json
-        """
-        return self.answer_query_table(queries).select(
-            result=create_result_json(pw.this.query, pw.this.response)
-        )
+### TASK INSTRUCTIONS:
 
-# class CustomServer(servers.BaseRestServer):
-#     def __init__(
-#         self,
-#         host: str,
-#         port: int,
-#         answerer: "AnswerGeneratingAgent",
-#         **rest_kwargs,
-#     ):
-#         super().__init__(host, port, **rest_kwargs)
-#         self.serve(
-#             route="/v1/chat",
-#             schema=answerer.AnswerQuerySchema,
-#             handler=answerer.answer_query,
-#             **rest_kwargs,
-#         )
+1. Read the provided query and its corresponding context(s) carefully.
+2. If the query is a composite or includes multiple sub-questions, you must answer them all in a logically unified, non-repetitive way.
+3. Your answer must be:
+   - Coherent
+   - Well-structured
+   - Free from duplication
+   - Grounded **strictly** in the provided context(s).
+4. At the end, extract the **minimal set of unique, supporting evidence snippets** from the docs that justify your answer.
+5. Return the output as a **valid Python dictionary** using this format:
 
-# chatmodel = llms.LiteLLMChat(
-#     model="groq/llama3-8b-8192",
-# )
+```json
+{
+  "answer": "<Final synthesized answer here>",
+  "source_snippet": "<Summarised text source snippets from where the answer is taken>"
+}
+CONSTRAINTS:
+*** Never use prior knowledge.
+*** Never hallucinate.
+*** Never answer if not grounded in context.
+*** All fields in the output dictionary are mandatory.
+*** Deduplicate overlapping or repeated snippets before output.
+"""
 
-# bot = AnswerGeneratingAgent(
-#     llm=chatmodel
-# )
+    def set_prompt_template(self, new_template: str):
+        self.prompt_template = new_template
 
-# server = CustomServer(
-#     host="0.0.0.0",
-#     port=8000,
-#     answerer=bot,
-# )
+    def run(self, query: str, docs: str, feedback: Optional[str] = "") -> Dict[str, Any]:
+        user_prompt = f"""Query: "{query}"\nDocs:"{docs}"\nPrevious Feedback (if any):"{feedback}" \n"""
+        messages = [
+            {"role": "system", "content": self.prompt_template},
+            {"role": "user", "content": user_prompt},
+        ]
 
-# server.run()
+        response_text = self.chat.__wrapped__(messages=messages)
+
+        return self._extract_dict_from_response(response_text)
+    
+    
+    def _extract_dict_from_response(self, text: str) -> Dict[str, Any]:
+        try:
+            match = re.search(r"{.*}", text, re.DOTALL)
+            if match:
+                extracted = match.group(0)
+                parsed = ast.literal_eval(extracted)  
+                return parsed
+            else:
+                raise ValueError("No valid dict structure found.")
+        except Exception as e:
+            return {
+                "error": f"Failed to parse response: {str(e)}",
+                "raw_response": text
+            }

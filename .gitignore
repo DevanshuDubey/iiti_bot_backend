@@ -3,3 +3,5 @@
 eg_request.py
 eg_response.json
 /venv
+/Cache
+__pycache__/

@@ -36,8 +36,8 @@ class BaseAgent(BaseQuestionAnswerer):
     @pw.table_transformer 
     def answer_query_table(self, queries: pw.Table) -> pw.Table:
         """
-        Returns answer as pw.Table"""
-        
+        Returns answer as pw.Table
+        """
         results = queries.with_columns(
             prompt=pw.apply(
                 lambda query_string: self.prompt_template.format(query=query_string),
@@ -45,7 +45,6 @@ class BaseAgent(BaseQuestionAnswerer):
             )
         )
 
-        
         results = results.with_columns(
             response=self.llm(llms.prompt_chat_single_qa(pw.this.prompt), model=pw.this.model)
         )
@@ -55,25 +54,10 @@ class BaseAgent(BaseQuestionAnswerer):
     @pw.table_transformer
     def answer_query(self, queries: pw.Table) -> pw.Table:
         """
-        Returns answer as Json"""
+        Returns answer as Json
+        """
         return self.answer_query_table(queries).select(
             result=create_result_json(pw.this.query, pw.this.response)
         )
 
 
-
-class CustomServer(servers.BaseRestServer):
-    def __init__(
-        self,
-        host: str,
-        port: int,
-        router_agent_answerer: "BaseAgent",
-        **rest_kwargs,
-    ):
-        super().__init__(host, port, **rest_kwargs)
-        self.serve(
-            route="/v1/chat",
-            schema=router_agent_answerer.AnswerQuerySchema,
-            handler=router_agent_answerer.answer_query,
-            **rest_kwargs,
-        )

@@ -1,4 +1,4 @@
-from BaseAgent import BaseAgent, CustomServer
+from .BaseAgent import BaseAgent
 from pathway.xpacks.llm import llms
 import warnings
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated", category=UserWarning)
@@ -47,22 +47,3 @@ class RouterAgent(BaseAgent):
  
 
 
-
-
-
-
-# chatmodel  = llms.LiteLLMChat(
-#     model="groq/deepseek-r1-distill-llama-70b",
-# )
-
-# bot = RouterAgent(
-#     llm=chatmodel
-# )
-
-# server = CustomServer(
-#     host="0.0.0.0",
-#     port=8000,
-#     router_agent_answerer=bot,
-# )
-
-# server.run()
