@@ -1,7 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated", category=UserWarning)
 import os
-os.environ["GROQ_API_KEY"]="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"
+os.environ["GROQ_API_KEY"]="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"
 import pathway as pw
 from pathway.xpacks.llm import llms, servers
 from typing import List
@@ -30,13 +30,14 @@ def create_final_json(query: str, route: str, llm_response: str, model) -> pw.Js
     response_value = llm_response
     if route == "clarifying_agent" or route == "chat_agent":
         return pw.Json({
+         "check" : "hiiiiiiiiii",
         "status": "success",
         "text": response_value
         })
 
     # if route == "sub_query_generating_agent":
     subqueries = [q.strip() for q in llm_response.split("<SBQ>") if q.strip()]
-    response = further_pipeline(query, subqueries, 4)
+    response , score , feedback , iteration_counter , doc_string = further_pipeline(query, subqueries, 4)
     # prompt = AnswerGeneratingAgent.prompt_template
 
     # response = bot(prompt.format(query=query_string, docs=doc_string))
@@ -49,11 +50,22 @@ def create_final_json(query: str, route: str, llm_response: str, model) -> pw.Js
     #     "response": bot(llms.prompt_chat_single_qa("Answer my quyestuion"), model=model)
     # })
         
+
+    # return pw.Json({
+    #      "check" : "hiiiiiiiiii",
+    #     "status": "success",
+    #     "critique_response" : response
+    #     })
+
     return pw.Json({
-        "check" : "hiiiiiiiiii"
-        # "status": "success",
-        # "text": response["text"],
-        # "source_snippet": response["source_snippet"]
+        "check" : "hiiiiiiiiii",
+        "status": "success",
+        "doc_string": doc_string,
+        "text": response["text"],
+        "snippetText": response["source_snippet"],
+        "iteration_counter": iteration_counter,
+        "score": score,
+        "feedback": feedback
         })
 
     # return pw.Json({
@@ -158,9 +170,53 @@ class CustomServer(servers.BaseRestServer):
         )
 
  
-server = CustomServer(host="0.0.0.0", port=8001, pipeline=Pipeline(bot),
+# server = CustomServer(host="0.0.0.0", port=3000, pipeline=Pipeline(bot),
     # allow_origin="*",
     # allow_methods=["POST", "GET", "OPTIONS"],
     # allow_headers=["Content-Type", "Authorization"]                  
-    )
+    # )
+
+# server = CustomServer(webserver=pw.io.http.PathwayWebserver(host="0.0.0.0", port=3000, with_cors=True), pipeline=Pipeline(bot),
+    # allow_origin="*",
+    # allow_methods=["POST", "GET", "OPTIONS"],
+    # allow_headers=["Content-Type", "Authorization"]                  
+    # )
+# server.run()
+
+
+class CustomServer(pw.xpacks.llm.servers.BaseRestServer):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        pipeline: "Pipeline",
+        with_cors: bool = False,
+        **rest_kwargs,
+    ):
+        # We override the _init_ to take control of PathwayWebserver creation.
+        # We do NOT call super()._init_() because we are replacing its logic.
+
+        # 1. Create the PathwayWebserver with CORS enabled.
+        self.webserver = pw.io.http.PathwayWebserver(
+            host=host,
+            port=port,
+            with_cors=with_cors
+        )
+
+        # 2. Call ⁠ self.serve ⁠ to define your endpoint(s).
+        self.serve(
+            route="/v1/chat",
+            schema=pipeline.QuerySchema,
+            handler=pipeline.run,
+            **rest_kwargs,
+        )
+
+# Instantiate your custom server and set ⁠ with_cors=True ⁠.
+server = CustomServer(
+    host="0.0.0.0", port=3000, pipeline=Pipeline(bot),
+    with_cors=True
+)
+
+# Run the server. It will now accept cross-origin requests on "/v1/chat".
+print(f"Starting server with CORS enabled at http://0.0.0.0:3000")
 server.run()

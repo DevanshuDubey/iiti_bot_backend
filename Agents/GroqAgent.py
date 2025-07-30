@@ -27,10 +27,7 @@ class GroqAgent:
 ```json
 {
   "answer": "<Final synthesized answer here>",
-  "source_snippets": [
-    "<minimal supporting snippet 1>",
-    "<minimal supporting snippet 2>"
-  ]
+  "source_snippet": "<Summarised text source snippets from where the answer is taken>"
 }
 CONSTRAINTS:
 ❌ Never use prior knowledge.
@@ -56,7 +53,7 @@ Previous Feedback (if any):
         response = self.client.chat.completions.create(
       model=self.model,
       messages=[
-          {"role": "system", "content": self._default_template},
+          {"role": "system", "content": self._default_template()},
           {"role": "user", "content": user_prompt}
       ]
   )

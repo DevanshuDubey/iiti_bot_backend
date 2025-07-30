@@ -1,6 +1,7 @@
 from groq import Groq
 from typing import Optional
 from typing import Optional, Dict, List, Any
+import re , ast
 
 class CritiqueAgent:
     def __init__(self, model: str = "llama3-70b-8192", prompt_template: Optional[str] = None):
@@ -21,6 +22,8 @@ class CritiqueAgent:
    - Does the answer rely only on the context without hallucinating?
 5. **User Satisfaction**: Will the user likely feel the answer is informative, useful, and complete?
 
+IMPORTANT INSTRUCTION : ** RESTRICT YOUR FEEDBACK TO THE MAIN QUERY OF THE USER ** 
+
 ### Scoring Guide:
 - A score **above 0.80** should only be assigned if the answer is factually correct, complete, and does not need further refinement.
 - A score **below or equal to 0.80** indicates that the answer is either partially correct, incomplete, unclear, or not aligned with the query/context.
@@ -29,8 +32,8 @@ class CritiqueAgent:
 Return a **valid JSON object** with:
 - `"SCORE"`: A float between 0.0 and 1.0 (rounded to 2 decimal places)
 - `"FEEDBACK"`: 
-   - If SCORE > 0.80: `"PASS"`
-   - If SCORE ≤ 0.80: **Provide highly detailed, constructive feedback**, highlighting missing information, factual errors, lack of clarity, or irrelevance. Feedback will be used to improve the next generated answer.
+   - If SCORE >= 0.80: `"PASS"`
+   - If SCORE < 0.80: **Provide highly detailed, constructive feedback**, highlighting missing information, factual errors, lack of clarity, or irrelevance. Feedback will be used to improve the next generated answer.
 
     
     
@@ -79,7 +82,7 @@ Return a **valid JSON object** with:
         self.prompt_template = new_template
 
     def run(self, query: str, docs: str, answer : str) -> str:
-        user_prompt = """
+        user_prompt = f"""
     User Query: "{query}"
     Context: "{docs}"
     Answer: "{answer}"
@@ -88,7 +91,7 @@ Return a **valid JSON object** with:
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "system", "content": self._default_template},
+                {"role": "system", "content": self._default_template()},
                 {"role": "user", "content": user_prompt}
             ]
         )

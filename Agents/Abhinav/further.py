@@ -4,7 +4,7 @@ import requests
 import os
 os.environ["GROQ_API_KEY"]="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"
 # client = Groq(api_key=groq_api_key)
-url = "http://localhost:3001/v1/retrieve"
+url = "http://0.0.0.0:8000/v1/retrieve"
 from GroqAgent import GroqAgent
 from Criticopy import CritiqueAgent
 # import os
@@ -62,7 +62,7 @@ def further_pipeline(main_query:str, queries : list, k : int) :
     
     # return query_string, doc_string
     AGAagent = GroqAgent()
-    CritiqueAgent = CritiqueAgent()
+    critiqueAgent = CritiqueAgent()
     # return doc_string+" \n\n\n\n\nthis is output "+agent.run(query_string,doc_string,initial_feedback)
     while True:
         
@@ -74,11 +74,16 @@ def further_pipeline(main_query:str, queries : list, k : int) :
         answer = response["answer"]
         source_snippet = response["source_snippet"]
 
-        critique_response = CritiqueAgent.run(main_query, doc_string, answer)
-
+        critique_response = critiqueAgent.run(main_query, doc_string, answer)
+        
         answer_score = critique_response["SCORE"]
         feedback = critique_response["FEEDBACK"]
- 
+        final_response = {
+                   "text" : answer,
+                   "source_snippet" : source_snippet
+               }
+        # return final_response , answer_score , feedback
+
 
 
          
@@ -91,7 +96,7 @@ def further_pipeline(main_query:str, queries : list, k : int) :
                    "text" : "fallback vala text",
                    "source_snippet" : source_snippet
                }
-               return fallback_response
+               return fallback_response , answer_score , feedback , iteration_counter , doc_string
             
             iteration_counter += 1 
             if subqueries:
@@ -106,7 +111,7 @@ def further_pipeline(main_query:str, queries : list, k : int) :
                    "text" : answer,
                    "source_snippet" : source_snippet
                }
-            return final_response
+            return final_response , answer_score , feedback , iteration_counter , doc_string
 
 
 
