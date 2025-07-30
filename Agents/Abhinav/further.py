@@ -5,7 +5,7 @@ import os
 os.environ["GROQ_API_KEY"]="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"
 # client = Groq(api_key=groq_api_key)
 url = "http://0.0.0.0:8000/v1/retrieve"
-from GroqAgent import GroqAgent
+from GroqAgent import AnswerGeneratingAgent
 from Criticopy import CritiqueAgent
 # import os
 # os.environ["GROQ_API_KEY"]="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"
@@ -37,7 +37,7 @@ def multiple_queries(main_query:str, queries : list, k : int):
     doc_string = ""
     for i , query in enumerate(queries):
         query_string += f"Query{i+1} : {query}\n"
-        doc_string += f"\n\nContext for query{i} :\n"
+        doc_string += f"\n\nContext for query{i+1} :\n"
         payload = get_payload(query, k)
         response = requests.post(url, json=payload)
         results = response.json()
@@ -61,7 +61,7 @@ def further_pipeline(main_query:str, queries : list, k : int) :
         query_string, doc_string = single_query(main_query, initial_k)
     
     # return query_string, doc_string
-    AGAagent = GroqAgent()
+    AGAagent = AnswerGeneratingAgent()
     critiqueAgent = CritiqueAgent()
     # return doc_string+" \n\n\n\n\nthis is output "+agent.run(query_string,doc_string,initial_feedback)
     while True:

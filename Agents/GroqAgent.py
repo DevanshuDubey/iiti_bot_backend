@@ -1,12 +1,14 @@
 import re
 import ast
-from groq import Groq
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, Any
+from pathway.xpacks.llm.llms import LiteLLMChat
 
-class GroqAgent:
-    def __init__(self, model: str = "llama3-70b-8192", prompt_template: Optional[str] = None):
-        self.client = Groq()
-        self.model = model
+class AnswerGeneratingAgent:
+    def __init__(self, model: str = "groq/llama3-70b-8192", prompt_template: Optional[str] = None):
+        self.chat = LiteLLMChat(
+            model=model,
+            response_format={"type": "json_object"},
+        )
         self.prompt_template = prompt_template or self._default_template()
 
     def _default_template(self) -> str:
@@ -30,44 +32,30 @@ class GroqAgent:
   "source_snippet": "<Summarised text source snippets from where the answer is taken>"
 }
 CONSTRAINTS:
-❌ Never use prior knowledge.
-❌ Never hallucinate.
-❌ Never answer if not grounded in context.
-✅ All fields in the output dictionary are mandatory.
-✅ Deduplicate overlapping or repeated snippets before output.
+*** Never use prior knowledge.
+*** Never hallucinate.
+*** Never answer if not grounded in context.
+*** All fields in the output dictionary are mandatory.
+*** Deduplicate overlapping or repeated snippets before output.
 """
 
     def set_prompt_template(self, new_template: str):
         self.prompt_template = new_template
 
     def run(self, query: str, docs: str, feedback: Optional[str] = "") -> Dict[str, Any]:
-        user_prompt = f"""Query:
-{query}
+        user_prompt = f"""Query: "{query}"\nDocs:"{docs}"\nPrevious Feedback (if any):"{feedback}" \n"""
+        messages = [
+            {"role": "system", "content": self.prompt_template},
+            {"role": "user", "content": user_prompt},
+        ]
 
-Docs:
-{docs}
+        response_text = self.chat.__wrapped__(messages=messages)
 
-Previous Feedback (if any):
-{feedback}"""
-        
-        response = self.client.chat.completions.create(
-      model=self.model,
-      messages=[
-          {"role": "system", "content": self._default_template()},
-          {"role": "user", "content": user_prompt}
-      ]
-  )
-
-        raw_text = response.choices[0].message.content.strip()
-        result_dict = self._extract_dict_from_response(raw_text)
-
-        return result_dict
+        return self._extract_dict_from_response(response_text)
+    
+    
     def _extract_dict_from_response(self, text: str) -> Dict[str, Any]:
-        """
-Safely parse the LLM response assuming it contains a Python-style or JSON-style dictionary.
-"""
         try:
-# Extract the first JSON/dict-like block
             match = re.search(r"{.*}", text, re.DOTALL)
             if match:
                 extracted = match.group(0)

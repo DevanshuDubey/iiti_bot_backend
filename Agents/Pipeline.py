@@ -38,7 +38,7 @@ def create_final_json(query: str, route: str, llm_response: str, model) -> pw.Js
 
     # if route == "sub_query_generating_agent":
     subqueries = [q.strip() for q in llm_response.split("<SBQ>") if q.strip()]
-    response , score , feedback , iteration_counter , doc_string = further_pipeline(query, subqueries, 4)
+    response , score , feedback , iteration_counter , doc_string , query_string = further_pipeline(query, subqueries, 4)
     # prompt = AnswerGeneratingAgent.prompt_template
 
     # response = bot(prompt.format(query=query_string, docs=doc_string))
@@ -61,6 +61,7 @@ def create_final_json(query: str, route: str, llm_response: str, model) -> pw.Js
     return pw.Json({
         "check" : "hiiiiiiiiii",
         "status": "success",
+        "query_string": query_string,
         "doc_string": doc_string,
         "text": response["text"],
         "snippetText": response["source_snippet"],

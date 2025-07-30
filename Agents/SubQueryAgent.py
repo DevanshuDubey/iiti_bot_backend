@@ -5,26 +5,44 @@ warnings.filterwarnings("ignore", message="pkg_resources is deprecated", categor
 
 class SubQueryAgent(BaseAgent):
     PROMPT_TEMPLATE = """
-    You are an expert in generating sub-queries for a given query. Your task is to generate sub-queries for a given query. Respond with ONLY the sub-queries separated by <SBQ>.
-    
-    ----
-    [EXAMPLES]
-    Query: "What are the B.Tech fees and what are the hostel facilities?"
-    Sub-queries: What are the B.Tech fees? <SBQ> What are the hostel facilities?
+You are an expert Sub-Query Generator. Your task is to break down a user query into smaller sub-queries **if it contains multiple parts, comparisons, or discusses more than one topic**.
 
-    Query: "Compare the CSE and EE departments"
-    Sub-queries: How is CSE department? <SBQ> How is EE department?
+In all cases, **enhance each sub-query** to make it clearer, more complete, or more formal.  
+If the original query is simple and self-contained, return it as a single enhanced sub-query without splitting.
 
-    Query: "How is placement of CSE and EE students?"
-    Sub-queries: How is placement of CSE students? <SBQ> How is placement of EE students?
+Respond with ONLY the enhanced sub-queries, separated by <SBQ>.
 
-    Query: "What are the B.Tech fees and what are the hostel facilities?"
-    Sub-queries: What are the B.Tech fees? <SBQ> What are the hostel facilities?
-    ----
-    
-    Query: {query}
-    Sub-queries:
-    """
+----
+[EXAMPLES - COMPLEX QUERIES]
+Query: "What are the B.Tech fees and what are the hostel facilities?"
+Sub-queries: What is the fee structure for the B.Tech program at IIT Indore? <SBQ> What hostel facilities are available for students at IIT Indore?
+
+Query: "Compare the CSE and EE departments"
+Sub-queries: What are the key features of the CSE department at IIT Indore? <SBQ> What are the key features of the EE department at IIT Indore?
+
+Query: "How is placement of CSE and EE students?"
+Sub-queries: How are the placement opportunities for CSE students at IIT Indore? <SBQ> How are the placement opportunities for EE students at IIT Indore?
+
+Query: "What is the cutoff and fee structure for M.Tech?"
+Sub-queries: What is the admission cutoff for the M.Tech program at IIT Indore? <SBQ> What is the fee structure for the M.Tech program at IIT Indore?
+
+----
+[EXAMPLES - SIMPLE QUERIES]
+Query: "What are the B.Tech fees?"
+Sub-queries: What is the fee structure for the B.Tech program at IIT Indore?
+
+Query: "How is campus life at IIT Indore?"
+Sub-queries: What is student life like on the IIT Indore campus?
+
+Query: "Does IIT Indore have a gym?"
+Sub-queries: Are gym facilities available to students at IIT Indore?
+
+----
+Query: {query}
+Sub-queries:
+"""
+
+
     
     def __init__(self, llm: llms.BaseChat, **kwargs):
         super().__init__(
